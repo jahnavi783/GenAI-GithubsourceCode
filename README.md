@@ -1,11 +1,5 @@
 # 🚀 GitHub Source Code Documentation Generator
 
-![Python](https://img.shields.io/badge/Python-3.10+-blue)
-![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-UI-red)
-![Ollama](https://img.shields.io/badge/LLM-Ollama-purple)
-![Status](https://img.shields.io/badge/Status-Active-success)
-
 ---
 
 ## 📌 Overview
