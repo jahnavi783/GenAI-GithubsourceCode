@@ -41,3 +41,39 @@ This project **automatically generates and maintains system design documentation
 ```bash
 pip install -r requirements.txt
 ```
+
+# Configure .env
+
+# GitHub
+
+GITHUB_APP_ID=123456
+GITHUB_INSTALLATION_ID=112854524
+GITHUB_OWNER=your-org-or-username
+GITHUB_REPO=your-repo-name
+GITHUB_PRIVATE_KEY_PATH=/path/to/private-key.pem
+GITHUB_WEBHOOK_SECRET=your_secret
+
+# Ollama
+
+OLLAMA_BASE_URL=http://localhost:11434
+LLM_MODEL=llama3.1:8b
+EMBED_MODEL=nomic-embed-text
+
+# Storage
+
+CHROMA_PATH=./chroma_db
+DOCS_FOLDER=./generated_docs
+
+# start ollama
+
+ollama pull llama3.1:8b
+ollama pull nomic-embed-text
+ollama serve
+
+# start backend
+
+uvicorn main:app --host 0.0.0.0 --port 8001
+
+# start Dashboard
+
+streamlit run dashboard\app.py
