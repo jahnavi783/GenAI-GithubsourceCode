@@ -23,6 +23,25 @@ CLR_TBL_ALT   = "DEEAF1"
 CLR_WHITE     = "FFFFFF"
 CLR_BORDER    = "BFBFBF"
 
+COMMIT_TABLE_HEADERS = [
+    "File",
+    "Change Type",
+    "New Code Added",
+    "Modified Code",
+    "Deleted Code",
+    "Breaking Changes",
+    "Team Impact",
+    "Changes Summary",
+]
+
+IMPACT_TABLE_HEADERS = [
+    "File",
+    "System Part",
+    "Functionality Affected",
+    "Risk Level",
+    "Notes",
+]
+
 
 # =============================================================================
 # PUBLIC API
@@ -210,16 +229,15 @@ def build_incremental_docx(ctx: dict) -> str:
     if doc_raw:
         _add_heading(doc, "Commit Change Details", level=1)
         commit_rows = _parse_markdown_table(doc_raw)
-        COMMIT_HEADERS = ["File Changed", "Change Type", "Description", "Lines Added", "Lines Removed", "Risk Level"]
         if commit_rows:
             data_rows = commit_rows[1:] if len(commit_rows) > 1 else commit_rows
-            widths = _distribute_widths(len(COMMIT_HEADERS), 9360)
-            c_tbl = _make_table(doc, rows=1 + len(data_rows), cols=len(COMMIT_HEADERS), col_widths=widths)
-            for ci, h in enumerate(COMMIT_HEADERS):
+            widths = _weighted_widths([2200, 1100, 1300, 1300, 1300, 1100, 1000, 1560], 9360)
+            c_tbl = _make_table(doc, rows=1 + len(data_rows), cols=len(COMMIT_TABLE_HEADERS), col_widths=widths)
+            for ci, h in enumerate(COMMIT_TABLE_HEADERS):
                 _cell(c_tbl, 0, ci, h, bold=True, fill=CLR_TBL_HDR, font_color=CLR_WHITE, font_size=8)
             for ri, row in enumerate(data_rows, start=1):
                 fill = CLR_TBL_ALT if ri % 2 == 0 else CLR_WHITE
-                for ci in range(len(COMMIT_HEADERS)):
+                for ci in range(len(COMMIT_TABLE_HEADERS)):
                     val = row[ci] if ci < len(row) else ""
                     _cell(c_tbl, ri, ci, val, fill=fill, font_size=8)
         doc.add_paragraph()
@@ -229,16 +247,15 @@ def build_incremental_docx(ctx: dict) -> str:
     if impact_raw:
         _add_heading(doc, "Impact Analysis", level=1)
         impact_rows = _parse_markdown_table(impact_raw)
-        IMPACT_HEADERS = ["Area Impacted", "Type of Impact", "Severity", "Description", "Action Required"]
         if impact_rows:
             data_rows = impact_rows[1:] if len(impact_rows) > 1 else impact_rows
-            widths = _distribute_widths(len(IMPACT_HEADERS), 9360)
-            i_tbl = _make_table(doc, rows=1 + len(data_rows), cols=len(IMPACT_HEADERS), col_widths=widths)
-            for ci, h in enumerate(IMPACT_HEADERS):
+            widths = _weighted_widths([2200, 1600, 2400, 900, 2260], 9360)
+            i_tbl = _make_table(doc, rows=1 + len(data_rows), cols=len(IMPACT_TABLE_HEADERS), col_widths=widths)
+            for ci, h in enumerate(IMPACT_TABLE_HEADERS):
                 _cell(i_tbl, 0, ci, h, bold=True, fill=CLR_TBL_HDR, font_color=CLR_WHITE, font_size=10)
             for ri, row in enumerate(data_rows, start=1):
                 fill = CLR_TBL_ALT if ri % 2 == 0 else CLR_WHITE
-                for ci in range(len(IMPACT_HEADERS)):
+                for ci in range(len(IMPACT_TABLE_HEADERS)):
                     val = row[ci] if ci < len(row) else ""
                     _cell(i_tbl, ri, ci, val, fill=fill, font_size=10)
         doc.add_paragraph()
@@ -375,7 +392,8 @@ def _make_table(doc: Document, rows: int, cols: int, col_widths: list) -> object
     existing_grid = tbl_el.find(qn("w:tblGrid"))
     if existing_grid is not None:
         tbl_el.remove(existing_grid)
-    tbl_el.append(tbl_grid)
+    # tbl_el.append(tbl_grid)
+    tbl_el.insert(1, tbl_grid)
     for i, row in enumerate(tbl.rows):
         for j, cell in enumerate(row.cells):
             tc = cell._tc
@@ -430,6 +448,14 @@ def _distribute_widths(cols: int, total: int = 9360) -> list:
     base = total // cols
     remainder = total % cols
     return [base + (1 if i < remainder else 0) for i in range(cols)]
+
+
+def _weighted_widths(weights: list[int], total: int = 9360) -> list[int]:
+    weight_total = sum(weights)
+    widths = [max(1, int(total * weight / weight_total)) for weight in weights]
+    diff = total - sum(widths)
+    widths[-1] += diff
+    return widths
 
 
 def _parse_markdown_table(text: str) -> list[list[str]]:
